@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Employee Management</title>
+    <style>
+        .form-group { margin-bottom: 15px; }
+        label { display: inline-block; width: 120px; }
+    </style>
+</head>
+<body>
+    <h2>Employee Registration Form</h2>
+    <form id="employeeForm">
+        <div class="form-group">
+            <label>Employee ID:</label>
+            <input type="text" id="employeeId" required>
+        </div>
+        <div class="form-group">
+            <label>Employee Name:</label>
+            <input type="text" id="employeeName" required>
+        </div>
+        <div class="form-group">
+            <label>Employee Email:</label>
+            <input type="email" id="employeeEmail" required>
+        </div>
+        <div class="form-group">
+            <label>Location:</label>
+            <input type="text" id="location" required>
+        </div>
+        <button type="submit">Submit</button>
+    </form>
+    
+    <h3>All Employees</h3>
+	<div id="employeeList"></div>
+	
+	<h3>Search Employee by ID</h3>
+	<div class="form-group">
+	    <label>Employee ID:</label>
+	    <input type="text" id="searchEmployeeId" required>
+	    <button onclick="fetchEmployeeById()">Search</button>
+	</div>
+	
+	<div id="singleEmployeeResult"></div>
+
+    <script>
+        document.getElementById('employeeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const employee = {
+                employeeId: document.getElementById('employeeId').value,
+                employeeName: document.getElementById('employeeName').value,
+                employeeEmail: document.getElementById('employeeEmail').value,
+                location: document.getElementById('location').value
+            };
+
+            fetch('http://localhost:8080/api/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(employee)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Employee saved successfully!');
+                fetchAllEmployees();
+                this.reset();
+            })
+            .catch(error => alert('Error saving employee'));
+        });
+        
+        // Fetch and display all employees
+	    function fetchAllEmployees() {
+	        fetch('http://localhost:8080/api/displayAll')
+	            .then(response => response.json())
+	            .then(data => {
+	                let employeeList = document.getElementById('employeeList');
+	                employeeList.innerHTML = '<ul>' + data.map(emp => 
+	                    `<li>ID: ${emp.employeeId}, Name: ${emp.employeeName}, Email: ${emp.employeeEmail}, Location: ${emp.location}</li>`
+	                ).join('') + '</ul>';
+	            })
+	            .catch(error => alert('Error fetching employees'));
+	    }
+	
+	    // Fetch a specific employee by ID
+	    function fetchEmployeeById() {
+	        const employeeId = document.getElementById('searchEmployeeId').value;
+	
+	        fetch(`http://localhost:8080/api/display/${employeeId}`)
+	            .then(response => response.json())
+	            .then(data => {
+	                let resultDiv = document.getElementById('singleEmployeeResult');
+	                if (data && data.employeeId) {
+	                    resultDiv.innerHTML = `<p>Employee ID: ${data.employeeId}</p>
+	                                           <p>Name: ${data.employeeName}</p>
+	                                           <p>Email: ${data.employeeEmail}</p>
+	                                           <p>Location: ${data.location}</p>`;
+	                } else {
+	                    resultDiv.innerHTML = `<p>Employee not found</p>`;
+	                }
+	            })
+	            .catch(error => alert('Error fetching employee'));
+	    }
+	
+	    // Call fetchAllEmployees when the page loads
+	    window.onload = fetchAllEmployees;
+    </script>
+</body>
+</html>
